@@ -18,7 +18,7 @@
 
 ## ✨ Features
 
-- 🎤 **AI-Powered Analysis** powered by OpenAI's Whisper model  
+- 🎤 **AI-Powered Analysis** powered by Librosa
 - 🎯 **Precision Cutting** identifies the most viral-ready segments  
 - ⚡ **Lightning Fast** processing with parallel audio analysis  
 - 🥁 **Enhanced Drop Detection** using chroma features and adaptive thresholding  
@@ -63,7 +63,7 @@ python src/app.py
 
 ```mermaid
 graph TD
-    A[YouTube URL] --> B(Whisper Transcription)
+    A[YouTube URL] --> B(Librosa Transcription)
     B --> C{Analyze Patterns}
     C -->|Beat Tracking| D[Identify Drops]
     C -->|Lyric Analysis| E[Find Catchy Hooks]
@@ -78,8 +78,7 @@ graph TD
 JumpCut/
 ├── src/
 │   ├── app.py                # Main application flow
-│   ├── whisper_analysis.py   # AI-powered audio processing
-│   └── viral_engine.py       # Trend prediction algorithms
+│   ├── audio_processing.py   # AI-powered audio processing
 ├── samples/                  # Pre-processed viral clips
 ├── requirements.txt          # Dependencies
 └── config.env                # API keys (gitignored)
@@ -87,7 +86,7 @@ JumpCut/
 
 ## 📌 Dependencies
 
-- `openai-whisper` - State-of-the-art speech recognition
+- `librosa` - Library for audio manipulation
 - `pytube` - YouTube audio extraction
 - `numpy` - Audio waveform processing
 - `python-dotenv` - Environment management

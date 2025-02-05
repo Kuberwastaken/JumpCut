@@ -1,140 +1,154 @@
 import librosa
 import numpy as np
-from scipy.signal import find_peaks, savgol_filter
+import scipy
+from sklearn.preprocessing import StandardScaler
+from scipy.signal import find_peaks
 import os
 from utils import log_error, download_audio, convert_audio_to_wav
 
-def detect_drops(y, sr):
-    """Enhanced drop detection using chroma features and adaptive thresholding."""
+def format_time(seconds):
+    """Format time as minutes:seconds (total seconds with decimal precision)."""
+    minutes = int(seconds // 60)
+    secs = seconds % 60
+    return f"{minutes}:{secs:05.2f} ({seconds:.2f}s)"
+
+def extract_audio_features(y, sr):
+    """Extract multiple audio features for better trend detection."""
+    
+    # Get various audio features
+    onset_env = librosa.onset.onset_strength(y=y, sr=sr)
+    tempo, beat_frames = librosa.beat.beat_track(y=y, sr=sr)
+    
+    # Spectral features
+    spectral_centroids = librosa.feature.spectral_centroid(y=y, sr=sr)[0]
+    spectral_rolloff = librosa.feature.spectral_rolloff(y=y, sr=sr)[0]
+    
+    # RMS energy
+    rms = librosa.feature.rms(y=y)[0]
+    
+    # Mel-frequency spectrogram
+    mel_spec = librosa.feature.melspectrogram(y=y, sr=sr)
+    mel_spec_db = librosa.power_to_db(mel_spec, ref=np.max)
+    
+    # Chromagram
+    chroma = librosa.feature.chroma_stft(y=y, sr=sr)
+    
+    return {
+        'onset_env': onset_env,
+        'beat_frames': beat_frames,
+        'spectral_centroids': spectral_centroids,
+        'spectral_rolloff': spectral_rolloff,
+        'rms': rms,
+        'mel_spec_db': mel_spec_db,
+        'chroma': chroma
+    }
+
+def calculate_novelty_curve(features):
+    """Calculate a novelty curve based on multiple features."""
+    
+    # Normalize all features
+    scaler = StandardScaler()
+    
+    # Process mel spectrogram for novelty
+    mel_novelty = np.diff(features['mel_spec_db'].mean(axis=0))
+    mel_novelty = np.pad(mel_novelty, (1, 0))
+    
+    # Combine RMS energy with onset envelope
+    energy_novelty = scaler.fit_transform(features['rms'].reshape(-1, 1)).flatten()
+    onset_novelty = scaler.fit_transform(features['onset_env'].reshape(-1, 1)).flatten()
+    
+    # Calculate chroma novelty
+    chroma_novelty = np.sum(np.diff(features['chroma'], axis=1)**2, axis=0)
+    chroma_novelty = np.pad(chroma_novelty, (1, 0))
+    chroma_novelty = scaler.fit_transform(chroma_novelty.reshape(-1, 1)).flatten()
+    
+    # Combine all novelty curves
+    combined_novelty = (energy_novelty + onset_novelty + chroma_novelty) / 3
+    
+    return scipy.signal.medfilt(combined_novelty, kernel_size=11)
+
+def find_trendy_segments(novelty_curve, threshold_percentile=85, min_distance_frames=100):
+    """Find trendy segments based on the novelty curve."""
+    
+    # Calculate adaptive threshold
+    threshold = np.percentile(novelty_curve, threshold_percentile)
+    
+    # Find peaks in novelty curve
+    peaks, _ = find_peaks(novelty_curve, 
+                         height=threshold,
+                         distance=min_distance_frames)
+    
+    # Group nearby peaks into segments
+    segments = []
+    current_segment = [peaks[0]]
+    
+    for peak in peaks[1:]:
+        if peak - current_segment[-1] < min_distance_frames * 2:
+            current_segment.append(peak)
+        else:
+            segments.append((current_segment[0], current_segment[-1]))
+            current_segment = [peak]
+    
+    segments.append((current_segment[0], current_segment[-1]))
+    
+    return segments
+
+def extract_trendy_parts(audio_file):
     try:
-        hop_length = 512
-        frame_length = 2048
-
-        # Core features
-        rms = librosa.feature.rms(y=y, hop_length=hop_length, frame_length=frame_length)[0]
-        mel_spec = librosa.feature.melspectrogram(y=y, sr=sr, hop_length=hop_length)
-        mel_db = librosa.power_to_db(mel_spec, ref=np.max)
-        spectral_contrast = librosa.feature.spectral_contrast(y=y, sr=sr, hop_length=hop_length)
-        onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length, aggregate=np.median)
-        chroma = np.mean(librosa.feature.chroma_stft(y=y, sr=sr, hop_length=hop_length), axis=0)
-
-        # Feature derivatives
-        rms_diff = np.diff(rms, prepend=rms[0])
-        mel_diff = np.diff(np.mean(mel_db, axis=0), prepend=0)
-        contrast_diff = np.diff(np.mean(spectral_contrast, axis=0), prepend=0)
-        chroma_diff = np.diff(chroma, prepend=0)
-
-        # Normalize and combine features
-        combined = (
-            librosa.util.normalize(rms_diff) * 2.0 +
-            librosa.util.normalize(mel_diff) * 1.5 +
-            librosa.util.normalize(contrast_diff) * 1.2 +
-            librosa.util.normalize(chroma_diff) * 1.0 +
-            librosa.util.normalize(onset_env) * 1.8
-        )
-
-        # Smooth the curve
-        smooth_diff = savgol_filter(combined, 15, 3)
-
-        return smooth_diff, hop_length
-
-    except Exception as e:
-        log_error(f"Error in detect_drops: {str(e)}")
-        return None, None
-
-def find_best_drop(diff_curve, hop_length, sr, duration):
-    """Find trendy segments using adaptive thresholding and silence detection."""
-    try:
-        # Adaptive threshold based on rolling variance
-        window_size = 50
-        rolling_var = np.array([np.var(diff_curve[max(0, i-window_size):i+1]) for i in range(len(diff_curve))])
-        threshold = np.median(diff_curve) + (1.5 * np.median(rolling_var))
-
-        # Peak detection with dynamic prominence
-        peaks, properties = find_peaks(
-            diff_curve, 
-            height=threshold, 
-            distance=int(1.5 * sr / hop_length), 
-            prominence=np.percentile(diff_curve, 75) * 0.5, 
-            width=10
-        )
-
-        if not peaks.size:
-            return None
-
-        peak_times = librosa.frames_to_time(peaks, sr=sr, hop_length=hop_length)
-        prominences = properties['prominences']
-
-        # Filter segments based on prominence
-        segments = []
-        for time, prom in zip(peak_times, prominences):
-            position_weight = 1.0 - abs((time / duration) - 0.5)
-            score = prom * position_weight
-            start = max(time - 5, 0)
-            end = min(time + 10, duration)
-            segments.append((start, end, score))
-
+        # Load the audio file
+        y, sr = librosa.load(audio_file, sr=None)
+        
+        # Extract audio features
+        features = extract_audio_features(y, sr)
+        
+        # Calculate novelty curve
+        novelty_curve = calculate_novelty_curve(features)
+        
+        # Find trendy segments
+        segments = find_trendy_segments(novelty_curve)
+        
         if not segments:
             return None
-
-        # Sort by score and take top segments
-        segments.sort(key=lambda x: x[2], reverse=True)
-        top_segments = segments[:3]
-
-        # Merge adjacent segments within 3-5s
-        merged = []
-        for start, end, _ in top_segments:
-            if not merged or start > merged[-1][1] + 5:
-                merged.append([start, end])
-            else:
-                merged[-1][1] = max(merged[-1][1], end)
-
-        return (min(s[0] for s in merged), max(s[1] for s in merged))
-
+        
+        # Calculate the starting time as the earliest segment start
+        start_time = min(librosa.frames_to_time(seg[0], sr=sr) for seg in segments)
+        # Calculate the ending time as the latest segment end
+        end_time = max(librosa.frames_to_time(seg[1], sr=sr) for seg in segments)
+        
+        # Format times using your existing format_time function
+        formatted_start = format_time(librosa.frames_to_time(segments[-1][1], sr=sr))
+        formatted_end = format_time(librosa.frames_to_time(segments[0][0], sr=sr))
+        
+        # Return the two parts in an array
+        return [formatted_start, formatted_end]
+    
     except Exception as e:
-        log_error(f"Error in find_best_drop: {str(e)}")
+        log_error(f"Error in extract_trendy_parts: {e}")
         return None
 
+
 def analyze_audio(youtube_link):
-    """Main analysis function with improved error handling and silence removal."""
     try:
+        # Download the audio from YouTube
         audio_file = download_audio(youtube_link)
         if not audio_file:
-            log_error("Failed to download audio")
+            log_error("Failed to download audio.")
             return None
 
+        # Convert the audio to WAV format
         wav_file = convert_audio_to_wav(audio_file)
         if not wav_file:
-            log_error("Failed to convert audio to WAV")
-            os.remove(audio_file)
+            log_error("Failed to convert audio to WAV.")
             return None
 
-        y, sr = librosa.load(wav_file, sr=None)
-        duration = librosa.get_duration(y=y, sr=sr)
+        # Extract trendy parts from the audio
+        timestamps = extract_trendy_parts(wav_file)
 
-        # Remove silence using librosa.effects.split()
-        intervals = librosa.effects.split(y, top_db=20)
-        non_silent_y = np.concatenate([y[start:end] for start, end in intervals])
-
-        diff_curve, hop_length = detect_drops(non_silent_y, sr)
-        if diff_curve is None:
-            log_error("Failed to detect drops")
-            os.remove(audio_file)
-            os.remove(wav_file)
-            return None
-
-        timestamps = find_best_drop(diff_curve, hop_length, sr, duration)
-
-        # Cleanup
+        # Clean up temporary files
         os.remove(audio_file)
         os.remove(wav_file)
 
-        if timestamps is None:
-            log_error("No suitable segments found")
-            return None
-
         return timestamps
-
     except Exception as e:
-        log_error(f"Error in analyze_audio: {str(e)}")
+        log_error(f"Error in analyze_audio: {e}")
         return None

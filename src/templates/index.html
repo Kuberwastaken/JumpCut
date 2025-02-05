@@ -1,67 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JumpCut</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JumpCut</title>
+  <link rel="icon" href="static/Jumpcut.ico"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="background-shapes">
-        <div class="shape"></div>
-        <div class="shape"></div>
+  <div class="background-shapes">
+    <div class="shape"></div>
+    <div class="shape"></div>
+  </div>
+  
+  <div class="container">
+    <h1 class="logo">JumpCut</h1>
+    <div class="input-group">
+      <input type="text" id="youtubeLink" placeholder="Paste YouTube music link">
     </div>
-    
-    <div class="container">
-        <h1 class="logo">JumpCut</h1>
-        <div class="input-group">
-            <input type="text" id="youtubeLink" placeholder="Paste YouTube music link">
-        </div>
-        <button onclick="findTrendyParts()">Find Trendy Parts</button>
-        <div class="result" id="result"></div>
-    </div>
+    <button onclick="findTrendyParts()">Find Trendy Parts</button>
+    <div class="result" id="result"></div>
+  </div>
 
-    <script>
-        function formatTime(seconds) {
-            const minutes = Math.floor(seconds / 60);
-            const secs = (seconds % 60).toFixed(2);
-            return `${minutes}m ${secs}s`;
+  <script>
+    function formatTime(seconds) {
+      const minutes = Math.floor(seconds / 60);
+      // Ensure seconds are padded to two decimal places, without extra spaces
+      const secs = (seconds % 60).toFixed(2);
+      return `${minutes}:${secs.padStart(5, '0')}`;
+    }
+  
+    async function findTrendyParts() {
+      const youtubeLink = document.getElementById('youtubeLink').value;
+      const resultDiv = document.getElementById('result');
+      
+      // Show loading indicator
+      resultDiv.innerHTML = '<div class="loading"><div></div><div></div><div></div><div></div></div>';
+      resultDiv.classList.add('show');
+  
+      try {
+        const response = await fetch('/trendy', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ youtube_link: youtubeLink })
+        });
+  
+        const data = await response.json();
+        console.log('Received data:', data);  // Debug log
+  
+        if (response.ok) {
+          let trendyParts = data.trendy_parts;
+          
+          // Ensure trendyParts is an array
+          if (!Array.isArray(trendyParts)) {
+            trendyParts = Object.values(trendyParts);
+          }
+  
+          let html = '';
+          if (trendyParts && trendyParts.length === 2) {
+            // Display with the custom labels
+            html += `<div class="trendy-part">✨ Starting Part: ${trendyParts[0]}</div>`;
+            html += `<div class="trendy-part">✨ Ending Part: ${trendyParts[1]}</div>`;
+          } else if (trendyParts && trendyParts.length > 0) {
+            // Fallback if the array does not have exactly 2 elements
+            trendyParts.forEach((part, index) => {
+              html += `<div class="trendy-part">✨ Trendy part ${index + 1}: ${part}</div>`;
+            });
+          } else {
+            html = 'No trendy parts found.';
+          }
+          resultDiv.innerHTML = html;
+        } else {
+          resultDiv.innerHTML = `❌ Error: ${data.error}`;
         }
-
-        function showLoading() {
-            const result = document.getElementById('result');
-            result.innerHTML = '<div class="loading"><div></div><div></div><div></div><div></div></div>';
-            result.classList.add('show');
-        }
-
-        async function findTrendyParts() {
-            const youtubeLink = document.getElementById('youtubeLink').value;
-            const resultDiv = document.getElementById('result');
-            
-            showLoading();
-
-            try {
-                const response = await fetch('/trendy', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ youtube_link: youtubeLink })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    const start = formatTime(data.trendy_parts.start);
-                    const end = formatTime(data.trendy_parts.end);
-                    resultDiv.innerHTML = `✨ Trendy part starts at ${start} and ends at ${end}`;
-                } else {
-                    resultDiv.innerHTML = `❌ Error: ${data.error}`;
-                }
-            } catch (error) {
-                resultDiv.innerHTML = '❌ Something went wrong. Please try again.';
-            }
-        }
-    </script>
+      } catch (error) {
+        console.error('Fetch error:', error);
+        resultDiv.innerHTML = '❌ Something went wrong. Please try again.';
+      }
+    }
+  </script>  
 </body>
 </html>

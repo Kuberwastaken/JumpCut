@@ -19,8 +19,8 @@ body {
     background: radial-gradient(circle at top right, #1ED760 -10%, #191414 30%);
     color: white;
     display: flex;
-    justify-content: center;
-    align-items: center;
+    justify-content: center;  /* Centers horizontally */
+    align-items: center;      /* Centers vertically */
     position: relative;
     overflow: hidden;
 }
@@ -63,6 +63,7 @@ body {
     z-index: 1;
     animation: slideUp 0.8s ease-out;
     text-align: center;
+    margin: auto;  /* Ensures that the container remains centered */
 }
 
 .logo {
