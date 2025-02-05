@@ -69,7 +69,7 @@ graph TD
     C -->|Lyric Analysis| E[Find Catchy Hooks]
     D --> F[Generate Clips]
     E --> F
-    F --> G🎉 Viral Moments
+    F --> G[Viral Moments]
 ```
 
 ## 📦 Project Structure
