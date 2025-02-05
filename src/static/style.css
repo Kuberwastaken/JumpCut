@@ -1,0 +1,296 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+
+:root {
+    --spotify-green: #1DB954;
+    --spotify-black: #191414;
+    --spotify-dark: #121212;
+    --glass-bg: rgba(255, 255, 255, 0.1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    min-height: 100vh;
+    background: radial-gradient(circle at top right, #1ED760 -10%, #191414 30%);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.shape {
+    position: absolute;
+    background: rgba(29, 185, 84, 0.1);
+    border-radius: 50%;
+    filter: blur(80px);
+    animation: float 20s infinite ease-in-out;
+}
+
+.shape:nth-child(1) {
+    width: 400px;
+    height: 400px;
+    top: -200px;
+    right: -100px;
+    animation-delay: -10s;
+}
+
+.shape:nth-child(2) {
+    width: 300px;
+    height: 300px;
+    bottom: -150px;
+    left: -150px;
+    background: rgba(30, 215, 96, 0.1);
+    animation-duration: 25s;
+}
+
+.container {
+    position: relative;
+    width: 95%;
+    max-width: 800px;
+    background: rgba(23, 23, 23, 0.8);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    padding: 60px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 1;
+    animation: slideUp 0.8s ease-out;
+    text-align: center;
+}
+
+.logo {
+    font-size: 3.5em;
+    font-weight: 700;
+    background: linear-gradient(45deg, #1DB954, #1ED760);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 30px;
+    letter-spacing: -1px;
+    animation: glow 3s ease-in-out infinite alternate;
+    text-align: center;
+}
+
+.input-group {
+    position: relative;
+    margin: 30px auto;
+    max-width: 90%;
+}
+
+input {
+    width: 100%;
+    padding: 20px;
+    background: var(--glass-bg);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    font-size: 1.3em;
+    color: white;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--spotify-green);
+    box-shadow: 0 0 20px rgba(29, 185, 84, 0.2);
+}
+
+input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+button {
+    width: 90%;
+    margin: 0 auto;
+    padding: 20px;
+    background: var(--spotify-green);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 1.3em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: block;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(29, 185, 84, 0.3);
+    background: #1ed760;
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+.result {
+    margin: 30px auto 0;
+    padding: 20px;
+    border-radius: 12px;
+    font-size: 1.3em;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.5s ease;
+    text-align: center;
+}
+
+.result.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.background-shapes::before,
+.background-shapes::after {
+    content: '';
+    position: fixed;
+    width: 120vw;
+    height: 120vh;
+    background: linear-gradient(45deg, rgba(29, 185, 84, 0.1), transparent);
+    animation: rotateBackground 30s infinite linear;
+    z-index: -1;
+}
+
+.background-shapes::after {
+    background: linear-gradient(-45deg, rgba(30, 215, 96, 0.1), transparent);
+    animation-duration: 40s;
+    animation-direction: reverse;
+}
+
+.shape {
+    animation: float 20s infinite ease-in-out;
+}
+
+.shape:nth-child(1) {
+    width: 600px;
+    height: 600px;
+    top: -300px;
+    right: -200px;
+}
+
+.shape:nth-child(2) {
+    width: 500px;
+    height: 500px;
+    bottom: -250px;
+    left: -250px;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes glow {
+    from {
+        text-shadow: 0 0 20px rgba(29, 185, 84, 0.5);
+    }
+    to {
+        text-shadow: 0 0 30px rgba(29, 185, 84, 0.8);
+    }
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translate(0, 0);
+    }
+    25% {
+        transform: translate(5%, 5%) rotate(5deg);
+    }
+    50% {
+        transform: translate(-5%, 10%) rotate(-5deg);
+    }
+    75% {
+        transform: translate(5%, -5%) rotate(5deg);
+    }
+}
+
+@keyframes rotateBackground {
+    from {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translate(0, 0) scale(1);
+    }
+    25% {
+        transform: translate(8%, 8%) scale(1.1) rotate(5deg);
+    }
+    50% {
+        transform: translate(-8%, 12%) scale(0.9) rotate(-5deg);
+    }
+    75% {
+        transform: translate(8%, -8%) scale(1.1) rotate(5deg);
+    }
+}
+
+.loading {
+    display: inline-block;
+    position: relative;
+    width: 80px;
+    height: 13px;
+}
+
+.loading div {
+    position: absolute;
+    top: 0;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: var(--spotify-green);
+    animation-timing-function: cubic-bezier(0, 1, 1, 0);
+}
+
+.loading div:nth-child(1) {
+    left: 8px;
+    animation: loading1 0.6s infinite;
+}
+
+.loading div:nth-child(2) {
+    left: 8px;
+    animation: loading2 0.6s infinite;
+}
+
+.loading div:nth-child(3) {
+    left: 32px;
+    animation: loading2 0.6s infinite;
+}
+
+.loading div:nth-child(4) {
+    left: 56px;
+    animation: loading3 0.6s infinite;
+}
+
+@keyframes loading1 {
+    0% { transform: scale(0); }
+    100% { transform: scale(1); }
+}
+
+@keyframes loading2 {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(24px, 0); }
+}
+
+@keyframes loading3 {
+    0% { transform: scale(1); }
+    100% { transform: scale(0); }
+}
