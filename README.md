@@ -1,5 +1,9 @@
-<h1 align="center"><strong>JumpCut</strong><br><span style="font-size: 0.3em;">A Music Streaming App for Gen Z's Attention Span</span></h1>
+<p align="center">
+  <strong style="font-size: 2em;">JumpCut</strong><br>
+  A Music Streaming App for Gen Z's Attention Span
+</p>
 
+---
 <p align="center">
     <img src="https://img.shields.io/badge/kuberwastaken-JumpCut-%231dbb55?style=flat-square" alt="GitHub Repo">
     <img src="https://img.shields.io/badge/version-2.0-%231dbb55?style=flat-square" alt="Version">
