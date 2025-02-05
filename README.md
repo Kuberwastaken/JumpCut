@@ -1,22 +1,18 @@
+<h1 align="center">JumpCut</h1>
+
+<p align="center"> A Music Streaming App for Gen Z's Attention Span </p>
+
 <p align="center">
-  <strong style="font-size: 2em;">JumpCut</strong><br>
-  A Music Streaming App for Gen Z's Attention Span
+  <img src="src\static\readme-images\JumpCut-Gif.gif" alt="JumpCut UI"> 
 </p>
 
----
 <p align="center">
     <img src="https://img.shields.io/badge/kuberwastaken-JumpCut-%231dbb55?style=flat-square" alt="GitHub Repo">
     <img src="https://img.shields.io/badge/version-2.0-%231dbb55?style=flat-square" alt="Version">
     <img src="https://img.shields.io/badge/edition-Alpha-%231dbb55?style=flat-square" alt="Alpha">
 </p>
 
-
-<p align="center">
-   <img src="src\static\readme-images\JumpCut-Gif.gif" alt="JumpCut UI">
-</p>
-
-**Skip sitting through the boring bits in parties**  
-Using AI, JumpCut serves the "trendiest" parts of songs, so you don't have to sit through the boring bit when you're vibing with your imaginary friends.
+<p align="center"><strong>Using AI, JumpCut serves the "trendiest" parts of songs, so you don't have to sit through the boring bit when you're vibing with your imaginary friends.</strong></p>
 
 ---
 
