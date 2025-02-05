@@ -1,4 +1,4 @@
-# Trendy Song App
+# JumpCut
 
 This application analyzes songs to find the most "trendy" parts using the Essentia library. It allows users to input a YouTube music link, retrieves the audio, and identifies the catchy segments of the song.
 
@@ -18,7 +18,7 @@ trendy-song-app
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/trendy-song-app.git
+   git clone https://github.com/kuberwastaken/JumpCut.git
    cd trendy-song-app
    ```
 
